@@ -53,7 +53,7 @@ public final class StreamHandler {
       
       // Add tool use blocks if any
       for toolUse in toolUseBlocks {
-         blocks.append(.toolUse(toolUse.id, toolUse.name, toolUse.input))
+         blocks.append(.toolUse(toolUse.id, toolUse.name, toolUse.input, nil))
       }
       
       return blocks
