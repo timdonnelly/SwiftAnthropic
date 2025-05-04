@@ -110,7 +110,7 @@ public struct MessageParameter: Encodable {
       }
    }
    
-   public struct Message: Encodable {
+   public struct Message: Codable, Equatable {
       
       public let role: String
       public let content: Content
@@ -120,7 +120,7 @@ public struct MessageParameter: Encodable {
          case assistant
       }
       
-      public enum Content: Encodable {
+      public enum Content: Codable, Equatable {
          
          case text(String)
          case list([ContentObject])
@@ -136,7 +136,31 @@ public struct MessageParameter: Encodable {
             }
          }
          
-         public enum ContentObject: Encodable {
+         public init(from decoder: any Decoder) throws {
+            let container = try decoder.singleValueContainer()
+            
+            // Try to decode as string first
+            if let text = try? container.decode(String.self) {
+               self = .text(text)
+               return
+            }
+            
+            // If not a string, try to decode as array of ContentObject
+            if let objects = try? container.decode([ContentObject].self) {
+               self = .list(objects)
+               return
+            }
+            
+            throw DecodingError.typeMismatch(
+               Content.self,
+               DecodingError.Context(
+                  codingPath: container.codingPath,
+                  debugDescription: "Expected: String | Array<ContentBlockParam>"
+               )
+            )
+         }
+         
+         public enum ContentObject: Codable, Equatable {
             case text(String, CacheControl?)
             case image(ImageSource, CacheControl?)
             case document(DocumentSource, CacheControl?)
@@ -204,6 +228,68 @@ public struct MessageParameter: Encodable {
                }
             }
             
+            public init(from decoder: any Decoder) throws {
+               let container = try decoder.container(keyedBy: CodingKeys.self)
+               let type = try container.decode(String.self, forKey: .type)
+               
+               switch type {
+               case "text":
+                  let text = try container.decode(String.self, forKey: .text)
+                  let cacheControl = try container.decodeIfPresent(CacheControl.self, forKey: .cacheControl)
+                  self = .text(text, cacheControl)
+                  
+               case "image":
+                  let source = try container.decode(ImageSource.self, forKey: .source)
+                  let cacheControl = try container.decodeIfPresent(CacheControl.self, forKey: .cacheControl)
+                  self = .image(source, cacheControl)
+                  
+               case "document":
+                  let source = try container.decode(DocumentSource.Source.self, forKey: .source)
+                  let title = try container.decodeIfPresent(String.self, forKey: .title)
+                  let context = try container.decodeIfPresent(String.self, forKey: .context)
+                  let citations = try container.decodeIfPresent(DocumentSource.Citations.self, forKey: .citations)
+                  let cacheControl = try container.decodeIfPresent(CacheControl.self, forKey: .cacheControl)
+
+                  let document = DocumentSource(
+                     source: source,
+                     title: title,
+                     context: context,
+                     citations: citations
+                  )
+                  self = .document(document, cacheControl)
+                  
+               case "tool_use":
+                  let id = try container.decode(String.self, forKey: .id)
+                  let name = try container.decode(String.self, forKey: .name)
+                  let input = try container.decode(MessageResponse.Content.Input.self, forKey: .input)
+                  let cacheControl = try container.decodeIfPresent(CacheControl.self, forKey: .cacheControl)
+                  self = .toolUse(id, name, input, cacheControl)
+                  
+               case "tool_result":
+                  let toolUseId = try container.decode(String.self, forKey: .toolUseId)
+                  let content = try container.decode(String.self, forKey: .content)
+                  let isError = try container.decodeIfPresent(Bool.self, forKey: .isError)
+                  let cacheControl = try container.decodeIfPresent(CacheControl.self, forKey: .cacheControl)
+                  self = .toolResult(toolUseId, content, isError, cacheControl)
+                  
+               case "thinking":
+                  let thinking = try container.decode(String.self, forKey: .thinking)
+                  let signature = try container.decode(String.self, forKey: .signature)
+                  self = .thinking(thinking, signature)
+                  
+               case "redacted_thinking":
+                  let data = try container.decode(String.self, forKey: .data)
+                  self = .redactedThinking(data)
+                  
+               default:
+                  throw DecodingError.dataCorruptedError(
+                     forKey: .type,
+                     in: container,
+                     debugDescription: "Unknown content type: \(type)"
+                  )
+               }
+            }
+
             enum CodingKeys: String, CodingKey {
                case type
                case source
@@ -229,20 +315,20 @@ public struct MessageParameter: Encodable {
             }
          }
          
-         public struct ImageSource: Encodable {
+         public struct ImageSource: Codable, Equatable {
             
             public let type: String
             public let mediaType: String
             public let data: String
             
-            public enum MediaType: String, Encodable {
+            public enum MediaType: String, Codable {
                case jpeg = "image/jpeg"
                case png = "image/png"
                case gif = "image/gif"
                case webp = "image/webp"
             }
             
-            public enum ImageSourceType: String, Encodable {
+            public enum ImageSourceType: String, Codable {
                case base64
             }
             
@@ -259,7 +345,7 @@ public struct MessageParameter: Encodable {
          
          /// Represents a document source for PDF files to be processed by Claude.
          /// - Note: Maximum file size is 32MB and maximum page count is 100 pages.
-         public struct DocumentSource: Encodable {
+         public struct DocumentSource: Codable, Equatable {
             /// The source information
             public let source: Source
             /// Optional title for the document
@@ -269,7 +355,7 @@ public struct MessageParameter: Encodable {
             /// Optional citations configuration
             public let citations: Citations?
             
-            public struct Source: Encodable {
+            public struct Source: Codable, Equatable {
                /// The type of document source
                public let type: String
                /// The media type of the document
@@ -305,7 +391,7 @@ public struct MessageParameter: Encodable {
                case invalidBase64Data
             }
             
-            public enum MediaType: String, Encodable {
+            public enum MediaType: String, Codable {
                case pdf = "application/pdf"
                case plainText = "text/plain"
                
@@ -317,12 +403,12 @@ public struct MessageParameter: Encodable {
                }
             }
             
-            public enum DocumentSourceType: String, Encodable {
+            public enum DocumentSourceType: String, Codable {
                case base64
                case text
             }
             
-            public struct Citations: Encodable {
+            public struct Citations: Codable, Equatable {
                public let enabled: Bool
                
                public init(enabled: Bool) {
@@ -330,7 +416,18 @@ public struct MessageParameter: Encodable {
                }
             }
             
-            // Updated initializer to include cache control
+            public init(
+               source: Source,
+               title: String?,
+               context: String?,
+               citations: Citations?
+            ) {
+               self.source = source
+               self.title = title
+               self.context = context
+               self.citations = citations
+            }
+
             public init(
                type: DocumentSourceType = .base64,
                mediaType: MediaType,
@@ -536,7 +633,7 @@ public struct MessageParameter: Encodable {
    }
    
    /// [Prompt Caching](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching)
-   public struct Cache: Encodable {
+   public struct Cache: Codable, Equatable {
       let type: CacheType
       let text: String
       let cacheControl: CacheControl?
@@ -551,7 +648,7 @@ public struct MessageParameter: Encodable {
          self.cacheControl = cacheControl
       }
       
-      public enum CacheType: String, Encodable {
+      public enum CacheType: String, Codable {
          case text
       }
    }

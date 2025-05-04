@@ -123,7 +123,7 @@ public struct MessageResponse: Decodable {
       case isError
     }
     
-    public enum DynamicContent: Codable {
+    public enum DynamicContent: Codable, Equatable {
       case string(String)
       case integer(Int)
       case double(Double)
