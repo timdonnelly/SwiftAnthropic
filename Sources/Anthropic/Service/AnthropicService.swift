@@ -59,6 +59,7 @@ public protocol AnthropicService {
   ///
   /// - Parameters:
   ///   - parameters: Parameters for the create message request.
+  ///   - betaHeaders: Optional beta headers for Anthropic's beta features.
   ///
   /// - Returns: A [MessageResponse](https://docs.anthropic.com/claude/reference/messages_post).
   ///
@@ -66,13 +67,15 @@ public protocol AnthropicService {
   ///
   /// For more information, refer to [Anthropic's Message API documentation](https://docs.anthropic.com/claude/reference/messages_post).
   func createMessage(
-    _ parameter: MessageParameter)
+    _ parameter: MessageParameter,
+    betaHeaders: [String]?)
   async throws -> MessageResponse
   
   /// Creates a message stream with the provided parameters.
   ///
   /// - Parameters:
   ///   - parameters: Parameters for the create message request.
+  ///   - betaHeaders: Optional beta headers for Anthropic's beta features.
   ///
   /// - Returns: A streamed sequence of `MessageStreamResponse`.
   ///   For more details, see [MessageStreamResponse](https://docs.anthropic.com/claude/reference/messages-streaming).
@@ -81,13 +84,15 @@ public protocol AnthropicService {
   ///
   /// For more information, refer to [Anthropic's Stream Message API documentation](https://docs.anthropic.com/claude/reference/messages-streaming).
   func streamMessage(
-    _ parameter: MessageParameter)
+    _ parameter: MessageParameter,
+    betaHeaders: [String]?)
   async throws -> AsyncThrowingStream<MessageStreamResponse, Error>
   
   /// Counts the number of tokens that would be used by a message for a given model.
   ///
   /// - Parameters:
   ///   - parameter: The parameters used to count tokens, including the model, messages, system prompt, and tools.
+  ///   - betaHeaders: Optional beta headers for Anthropic's beta features.
   ///
   /// - Returns: A `MessageInputTokens` object containing the count of input tokens.
   ///
@@ -111,7 +116,8 @@ public protocol AnthropicService {
   ///
   /// For more details, see [Count Message tokens](https://docs.anthropic.com/en/api/messages-count-tokens)
   func countTokens(
-    parameter: MessageTokenCountParameter)
+    parameter: MessageTokenCountParameter,
+    betaHeaders: [String]?)
   async throws -> MessageInputTokens
   
   
@@ -134,6 +140,29 @@ public protocol AnthropicService {
   func createStreamTextCompletion(
     _ parameter: TextCompletionParameter)
   async throws -> AsyncThrowingStream<TextCompletionStreamResponse, Error>
+}
+
+extension AnthropicService {
+  public func createMessage(
+    _ parameter: MessageParameter)
+  async throws -> MessageResponse
+  {
+    try await createMessage(parameter, betaHeaders: nil)
+  }
+
+  public func streamMessage(
+    _ parameter: MessageParameter)
+  async throws -> AsyncThrowingStream<MessageStreamResponse, Error>
+  {
+    try await streamMessage(parameter, betaHeaders: nil)
+  }
+
+  public func countTokens(
+    parameter: MessageTokenCountParameter)
+  async throws -> MessageInputTokens
+  {
+    try await countTokens(parameter: parameter, betaHeaders: nil)
+  }
 }
 
 extension AnthropicService {

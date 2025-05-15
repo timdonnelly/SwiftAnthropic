@@ -33,14 +33,11 @@ struct AIProxyService: AnthropicService {
   /// Defaults to "2023-06-01"
   private var apiVersion: String
   
-  private let betaHeaders: [String]?
-  
   init(
     partialKey: String,
     serviceURL: String,
     clientID: String? = nil,
     apiVersion: String = "2023-06-01",
-    betaHeaders: [String]?,
     debugEnabled: Bool)
   {
     let decoderWithSnakeCaseStrategy = JSONDecoder()
@@ -50,7 +47,6 @@ struct AIProxyService: AnthropicService {
     self.serviceURL = serviceURL
     self.clientID = clientID
     self.apiVersion = apiVersion
-    self.betaHeaders = betaHeaders
     self.debugEnabled = debugEnabled
     self.httpClient = URLSessionHTTPClientAdapter(
       urlSession: URLSession(
@@ -64,7 +60,8 @@ struct AIProxyService: AnthropicService {
   // MARK: Message
   
   func createMessage(
-    _ parameter: MessageParameter)
+    _ parameter: MessageParameter,
+    betaHeaders: [String]?)
   async throws -> MessageResponse
   {
     var localParameter = parameter
@@ -74,7 +71,8 @@ struct AIProxyService: AnthropicService {
   }
   
   func streamMessage(
-    _ parameter: MessageParameter)
+    _ parameter: MessageParameter,
+    betaHeaders: [String]?)
   async throws -> AsyncThrowingStream<MessageStreamResponse, Error>
   {
     var localParameter = parameter
@@ -84,7 +82,8 @@ struct AIProxyService: AnthropicService {
   }
   
   func countTokens(
-    parameter: MessageTokenCountParameter)
+    parameter: MessageTokenCountParameter,
+    betaHeaders: [String]?)
   async throws -> MessageInputTokens
   {
     let request = try await AnthropicAPI(base: serviceURL, apiPath: .countTokens).request(aiproxyPartialKey: partialKey, clientID: clientID, version: apiVersion, method: .post, params: parameter, betaHeaders: betaHeaders)

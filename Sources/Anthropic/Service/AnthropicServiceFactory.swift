@@ -19,7 +19,6 @@ public final class AnthropicServiceFactory {
   ///   - apiKey: The API key required for authentication.
   ///   - apiVersion: The Anthropic api version. Currently "2023-06-01". (Can be overriden)
   ///   - basePath: An overridable base path for requests, defaults to https://api.anthropic.com
-  ///   - betaHeaders: An array of headers for Anthropic's beta features.
   ///   - httpClient: The HTTP client to be used for network calls (default creates platform-appropriate client).
   ///   - debugEnabled: If `true` service prints event on DEBUG builds, default to `false`.
   ///
@@ -28,7 +27,6 @@ public final class AnthropicServiceFactory {
     apiKey: String,
     apiVersion: String = "2023-06-01",
     basePath: String = "https://api.anthropic.com",
-    betaHeaders: [String]?,
     httpClient: HTTPClient? = nil,
     debugEnabled: Bool = false)
     -> AnthropicService
@@ -37,7 +35,6 @@ public final class AnthropicServiceFactory {
       apiKey: apiKey,
       apiVersion: apiVersion,
       basePath: basePath,
-      betaHeaders: betaHeaders,
       httpClient: httpClient ?? HTTPClientFactory.createDefault(),
       debugEnabled: debugEnabled)
   }
@@ -56,7 +53,6 @@ public final class AnthropicServiceFactory {
   ///                      the `clientID` argument out, and IDs will be generated automatically for you.
   ///
   ///   - apiVersion: The Anthropic api version. Currently "2023-06-01". (Can be overriden)
-  ///   - betaHeaders: An array of headers for Anthropic's beta features.
   ///   - debugEnabled: If `true` service prints event on DEBUG builds, default to `false`.
   ///
   /// - Returns: A conformer of `AnthropicService` that proxies all requests through api.aiproxy.pro
@@ -65,7 +61,6 @@ public final class AnthropicServiceFactory {
     aiproxyServiceURL: String,
     aiproxyClientID: String? = nil,
     apiVersion: String = "2023-06-01",
-    betaHeaders: [String]?,
     debugEnabled: Bool = false)
     -> AnthropicService
   {
@@ -74,7 +69,6 @@ public final class AnthropicServiceFactory {
       serviceURL: aiproxyServiceURL,
       clientID: aiproxyClientID,
       apiVersion: apiVersion,
-      betaHeaders: betaHeaders,
       debugEnabled: debugEnabled)
   }
 #endif

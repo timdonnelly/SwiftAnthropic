@@ -17,7 +17,6 @@ struct DefaultAnthropicService: AnthropicService {
   let apiKey: String
   let apiVersion: String
   let basePath: String
-  let betaHeaders: [String]?
   /// Set this flag to TRUE if you need to print request events in DEBUG builds.
   private let debugEnabled: Bool
   
@@ -25,7 +24,6 @@ struct DefaultAnthropicService: AnthropicService {
     apiKey: String,
     apiVersion: String = "2023-06-01",
     basePath: String,
-    betaHeaders: [String]?,
     httpClient: HTTPClient,
     debugEnabled: Bool)
   {
@@ -36,14 +34,14 @@ struct DefaultAnthropicService: AnthropicService {
     self.apiKey = apiKey
     self.apiVersion = apiVersion
     self.basePath = basePath
-    self.betaHeaders = betaHeaders
     self.debugEnabled = debugEnabled
   }
   
   // MARK: Message
   
   func createMessage(
-    _ parameter: MessageParameter)
+    _ parameter: MessageParameter,
+    betaHeaders: [String]?)
   async throws -> MessageResponse
   {
     var localParameter = parameter
@@ -53,7 +51,8 @@ struct DefaultAnthropicService: AnthropicService {
   }
   
   func streamMessage(
-    _ parameter: MessageParameter)
+    _ parameter: MessageParameter,
+    betaHeaders: [String]?)
   async throws -> AsyncThrowingStream<MessageStreamResponse, Error>
   {
     var localParameter = parameter
@@ -63,7 +62,8 @@ struct DefaultAnthropicService: AnthropicService {
   }
   
   func countTokens(
-    parameter: MessageTokenCountParameter)
+    parameter: MessageTokenCountParameter,
+    betaHeaders: [String]?)
   async throws -> MessageInputTokens
   {
     let request = try AnthropicAPI(base: basePath, apiPath: .countTokens).request(apiKey: apiKey, version: apiVersion, method: HTTPMethod.post, params: parameter, betaHeaders: betaHeaders)
