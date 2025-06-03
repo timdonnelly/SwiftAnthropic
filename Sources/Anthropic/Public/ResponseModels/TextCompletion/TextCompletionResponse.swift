@@ -8,7 +8,7 @@
 import Foundation
 
 /// [Completion Response](https://docs.anthropic.com/claude/reference/complete_post)
-public struct TextCompletionResponse: Decodable {
+public struct TextCompletionResponse: Decodable, AnthropicResponse {
    
    /// Unique object identifier.
    ///
@@ -32,4 +32,7 @@ public struct TextCompletionResponse: Decodable {
    
    /// The model that handled the request.
    public let model: String
+
+   /// The unique request identifier from the response header (x-request-id).
+   public var requestID: String?
 }

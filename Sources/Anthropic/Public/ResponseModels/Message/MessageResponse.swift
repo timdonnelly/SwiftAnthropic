@@ -8,7 +8,7 @@
 import Foundation
 
 /// [Message Response](https://docs.anthropic.com/claude/reference/messages_post)
-public struct MessageResponse: Decodable {
+public struct MessageResponse: Decodable, AnthropicResponse {
   /// Unique object identifier.
   ///
   /// The format and length of IDs may change over time.
@@ -69,6 +69,9 @@ public struct MessageResponse: Decodable {
   /// Container for the number of tokens used.
   public let usage: Usage
   
+  /// The unique request identifier from the response header (x-request-id).
+  public var requestID: String?
+
   public enum Content: Codable {
     public typealias Input = [String: DynamicContent]
     public typealias Citations = [Citation]

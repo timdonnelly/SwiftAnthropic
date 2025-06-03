@@ -7,11 +7,14 @@
 
 import Foundation
 
-public struct MessageInputTokens: Decodable {
+public struct MessageInputTokens: Decodable, AnthropicResponse {
    
    /// The total number of tokens across the provided list of messages, system prompt, and tools.
    public let inputTokens: Int
    
+   /// The unique request identifier from the response header (x-request-id).
+   public var requestID: String?
+
    public init(from decoder: Decoder) throws {
       if let container = try? decoder.singleValueContainer(),
          let dict = try? container.decode([String: Int].self),

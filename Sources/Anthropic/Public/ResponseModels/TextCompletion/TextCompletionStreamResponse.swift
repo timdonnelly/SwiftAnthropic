@@ -8,7 +8,7 @@
 import Foundation
 
 /// [Text Completion Response](https://docs.anthropic.com/claude/reference/streaming)
-public struct TextCompletionStreamResponse: Decodable {
+public struct TextCompletionStreamResponse: Decodable, AnthropicResponse {
    
    public let type: String
 
@@ -18,4 +18,6 @@ public struct TextCompletionStreamResponse: Decodable {
    
    public let model: String?
 
+   /// The unique request identifier from the response header (x-request-id).
+   public var requestID: String?
 }

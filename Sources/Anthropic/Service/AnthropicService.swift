@@ -165,6 +165,10 @@ extension AnthropicService {
   }
 }
 
+public protocol AnthropicResponse {
+  var requestID: String? { get set }
+}
+
 extension AnthropicService {
   
   /// Asynchronously fetches a decodable data type from Anthropic's API.
@@ -175,7 +179,7 @@ extension AnthropicService {
   ///   - debugEnabled: If true the service will print events on DEBUG builds.
   /// - Throws: An error if the request fails or if decoding fails.
   /// - Returns: A value of the specified decodable type.
-  public func fetch<T: Decodable>(
+  public func fetch<T: Decodable & AnthropicResponse>(
     type: T.Type,
     with request: URLRequest,
     debugEnabled: Bool)
@@ -208,8 +212,11 @@ extension AnthropicService {
       print("DEBUG JSON FETCH API = \(try JSONSerialization.jsonObject(with: data, options: .allowFragments) as? [String: Any])")
     }
 #endif
+    let requestID = response.headers["request-id"]
     do {
-      return try decoder.decode(type, from: data)
+      var decoded = try decoder.decode(type, from: data)
+      decoded.requestID = requestID
+      return decoded
     } catch let DecodingError.keyNotFound(key, context) {
       let debug = "Key '\(key.stringValue)' not found: \(context.debugDescription)"
       let codingPath = "codingPath: \(context.codingPath)"
@@ -240,7 +247,7 @@ extension AnthropicService {
   ///   - debugEnabled: If true the service will print events on DEBUG builds.
   /// - Throws: An error if the request fails or if decoding fails.
   /// - Returns: An asynchronous throwing stream of the specified decodable type.
-  public func fetchStream<T: Decodable>(
+  public func fetchStream<T: Decodable & AnthropicResponse>(
     type: T.Type,
     with request: URLRequest,
     debugEnabled: Bool)
@@ -264,6 +271,7 @@ extension AnthropicService {
       // This is a limitation we accept for now
       throw APIError.responseUnsuccessful(description: errorMessage)
     }
+    let requestID = response.headers["request-id"]
     return AsyncThrowingStream { continuation in
       let task = Task {
         do {
@@ -280,7 +288,8 @@ extension AnthropicService {
               }
 #endif
               do {
-                let decoded = try self.decoder.decode(T.self, from: data)
+                var decoded = try self.decoder.decode(T.self, from: data)
+                decoded.requestID = requestID
                 continuation.yield(decoded)
               } catch let DecodingError.keyNotFound(key, context) {
                 let debug = "Key '\(key.stringValue)' not found: \(context.debugDescription)"
