@@ -68,6 +68,7 @@ extension Endpoint {
     if let params {
       let encoder = JSONEncoder()
       encoder.keyEncodingStrategy = .convertToSnakeCase
+      encoder.outputFormatting = .sortedKeys
       request.httpBody = try encoder.encode(params)
     }
     return request
