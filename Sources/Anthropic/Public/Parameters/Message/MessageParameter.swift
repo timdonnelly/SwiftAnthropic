@@ -315,31 +315,57 @@ public struct MessageParameter: Encodable {
             }
          }
          
-         public struct ImageSource: Codable, Equatable {
             
-            public let type: String
-            public let mediaType: String
-            public let data: String
-            
-            public enum MediaType: String, Codable {
+         public enum ImageSource: Codable, Equatable, Sendable {
+            public enum MediaType: String, Codable, Sendable {
                case jpeg = "image/jpeg"
                case png = "image/png"
                case gif = "image/gif"
                case webp = "image/webp"
             }
             
-            public enum ImageSourceType: String, Codable {
-               case base64
+            public enum CodingKeys: String, CodingKey {
+               case type
+               case mediaType = "media_type"
+               case data
+               case url
             }
             
-            public init(
-               type: ImageSourceType,
-               mediaType: MediaType,
-               data: String)
-            {
-               self.type = type.rawValue
-               self.mediaType = mediaType.rawValue
-               self.data = data
+            case base64(MediaType, String)
+            case url(String)
+
+            public init(from decoder: any Decoder) throws {
+               let container = try decoder.container(keyedBy: CodingKeys.self)
+               let type = try container.decode(String.self, forKey: .type)
+               switch type {
+               case "base64":
+                  let mediaType = try container.decode(MediaType.self, forKey: .mediaType)
+                  let data = try container.decode(String.self, forKey: .data)
+                  self = .base64(mediaType, data)
+               case "url":
+                  let url = try container.decode(String.self, forKey: .url)
+                  self = .url(url)
+               default:
+                  throw DecodingError.dataCorruptedError(
+                     forKey: .type,
+                     in: container,
+                     debugDescription: "Unknown source type: \(type)"
+                  )
+               }
+            }
+
+            public func encode(to encoder: any Encoder) throws {
+               var container = encoder.container(keyedBy: CodingKeys.self)
+
+               switch self {
+               case let .base64(mediaType, data):
+                  try container.encode("base64", forKey: .type)
+                  try container.encode(mediaType, forKey: .mediaType)
+                  try container.encode(data, forKey: .data)
+               case let .url(url):
+                  try container.encode("url", forKey: .type)
+                  try container.encode(url, forKey: .url)
+               }
             }
          }
          
