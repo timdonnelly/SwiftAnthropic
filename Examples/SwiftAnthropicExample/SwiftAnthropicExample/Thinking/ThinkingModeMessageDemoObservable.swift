@@ -90,7 +90,7 @@ import SwiftUI
             
             // Create content objects: thinking blocks + text
             var contentObjects = thinkingBlocks
-            contentObjects.append(.text(finalMessage))
+            contentObjects.append(.text(finalMessage, nil))
             
             // Create assistant message with both thinking blocks and text
             let assistantMessage = MessageParameter.Message(

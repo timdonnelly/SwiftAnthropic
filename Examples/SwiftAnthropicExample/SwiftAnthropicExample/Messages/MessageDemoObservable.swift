@@ -101,14 +101,14 @@ import SwiftUI
          let message = MessageParameter.Message(
             role: .user,
             content: .list([
-               .document(documentSource),
-               .text(prompt.isEmpty ? "Please analyze this document and provide a summary" : prompt)
+               .document(documentSource, nil),
+               .text(prompt.isEmpty ? "Please analyze this document and provide a summary" : prompt, nil)
             ])
          )
          
          // Create parameters
          let parameters = MessageParameter(
-            model: .claude35Sonnet,
+            model: .claude37Sonnet,
             messages: [message],
             maxTokens: 1024
          )
