@@ -402,15 +402,6 @@ public struct MessageResponse: Decodable, AnthropicResponse {
     
     /// Server tool usage information - NEW
     public let serverToolUse: ServerToolUse?
-
-    private enum CodingKeys: String, CodingKey {
-      case inputTokens = "input_tokens"
-      case outputTokens = "output_tokens"
-      case thinkingTokens = "thinking_tokens"
-      case cacheCreationInputTokens = "cache_creation_input_tokens"
-      case cacheReadInputTokens = "cache_read_input_tokens"
-      case serverToolUse = "server_tool_use"
-    }
   }
   
   public struct ServerToolUse: Codable {
