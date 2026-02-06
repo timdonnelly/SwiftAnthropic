@@ -55,7 +55,7 @@ import SwiftUI
          messages: messages,
          maxTokens: 20000,
          stream: true,
-         thinking: .init(budgetTokens: budgetTokens)
+         thinking: .enabled(budgetTokens: budgetTokens)
       )
       
       // Count tokens (optional)

@@ -91,10 +91,14 @@ public struct MessageParameter: Encodable {
    let toolChoice: ToolChoice?
    
    /// Extended thinking mode configuration
-   /// Controls whether Claude's extended thinking/reasoning mode is enabled
-   /// and specifies token budget allocated for thinking before responding.
+   /// Controls whether Claude's extended thinking/reasoning mode is enabled.
+   /// Use `.adaptive` for Opus 4.6+ or `.enabled(budgetTokens:)` for older models.
    public let thinking: Thinking?
    
+   /// Output configuration options including the effort parameter.
+   /// Supported on Claude Opus 4.5 and later. Can be used with or without thinking enabled.
+   public let outputConfig: OutputConfig?
+
    public enum System: Encodable {
       case text(String)
       case list([Cache])
@@ -692,24 +696,66 @@ public struct MessageParameter: Encodable {
       }
    }
    
-   public struct Thinking: Encodable {
-      /// The type of thinking, currently only "enabled" is supported
-      let type: ThinkingType
-      /// Token budget allocated for extended thinking (maximum number of tokens to use for thinking)
-      let budgetTokens: Int
-      
-      public enum ThinkingType: String, Encodable {
-         case enabled
-      }
+   /// Extended thinking mode configuration.
+   ///
+   /// There are two thinking modes:
+   /// - **Adaptive** (recommended for Opus 4.6+): Claude dynamically decides when and how much to think.
+   ///   Use with the `effort` parameter in `OutputConfig` to guide thinking allocation.
+   /// - **Enabled** (manual mode): You specify a fixed `budgetTokens` for thinking.
+   ///   Required for older models (Sonnet 4.5, Opus 4.5, etc.).
+   public enum Thinking: Encodable {
+      /// Adaptive thinking mode where Claude decides when and how much to think.
+      /// Recommended for Claude Opus 4.6+. Use with `OutputConfig.effort` to guide thinking.
+      case adaptive
+
+      /// Manual thinking mode with a fixed token budget.
+      /// Required for older models. Deprecated on Opus 4.6.
+      /// - Parameter budgetTokens: Maximum number of tokens to use for thinking.
+      case enabled(budgetTokens: Int)
       
       private enum CodingKeys: String, CodingKey {
          case type
          case budgetTokens = "budget_tokens"
       }
       
-      public init(type: ThinkingType = .enabled, budgetTokens: Int) {
-         self.type = type
-         self.budgetTokens = budgetTokens
+      public func encode(to encoder: Encoder) throws {
+         var container = encoder.container(keyedBy: CodingKeys.self)
+         switch self {
+         case .adaptive:
+            try container.encode("adaptive", forKey: .type)
+         case .enabled(let budgetTokens):
+            try container.encode("enabled", forKey: .type)
+            try container.encode(budgetTokens, forKey: .budgetTokens)
+         }
+      }
+   }
+
+   /// Output configuration options.
+   ///
+   /// Supported on Claude Opus 4.5 and later. The effort parameter can be used
+   /// with or without extended thinking enabled.
+   public struct OutputConfig: Encodable {
+      /// Controls how thoroughly Claude responds, trading off between capability and token efficiency.
+      ///
+      /// - `max`: Absolute maximum capability with no constraints. **Opus 4.6 only.**
+      /// - `high` (default): High capability, equivalent to not setting the parameter.
+      /// - `medium`: Balanced approach with moderate token savings.
+      /// - `low`: Most efficient with significant token savings, some capability reduction.
+      public let effort: Effort?
+
+      public enum Effort: String, Encodable {
+         /// Absolute maximum capability with no constraints on token spending. **Opus 4.6 only.**
+         case max
+         /// High capability. Equivalent to not setting the parameter. (Default)
+         case high
+         /// Balanced approach with moderate token savings.
+         case medium
+         /// Most efficient. Significant token savings with some capability reduction.
+         case low
+      }
+
+      public init(effort: Effort) {
+         self.effort = effort
       }
    }
    
@@ -775,7 +821,8 @@ public struct MessageParameter: Encodable {
       topP: Double? = nil,
       tools: [Tool]? = nil,
       toolChoice: ToolChoice? = nil,
-      thinking: Thinking? = nil)
+      thinking: Thinking? = nil,
+      outputConfig: OutputConfig? = nil)
    {
       self.model = model.value
       self.messages = messages
@@ -790,5 +837,6 @@ public struct MessageParameter: Encodable {
       self.tools = tools
       self.toolChoice = toolChoice
       self.thinking = thinking
+      self.outputConfig = outputConfig
    }
 }

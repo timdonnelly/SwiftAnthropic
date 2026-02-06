@@ -43,6 +43,9 @@ import SwiftUI
                   toolUse = toolUSe
                case .thinking(let thinking):
                   self.thinking = thinking.thinking
+               case .redactedThinking:
+                  // Redacted thinking contains encrypted content for safety
+                  break
                case .serverToolUse(let serverToolUse):
                   dump(serverToolUse)
                case .webSearchToolResult(let webSearchTool):
